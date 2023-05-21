@@ -41,9 +41,9 @@ use {
 }
 ```
 
-## Usage
+## Customization
 
-To customize how the rainbow indentation, pass a second argument to `make_opts`.
+To customize how the rainbow indentation looks, pass a second argument to `make_opts` when creating indent-blankline options.
 
 ```lua
 return require("indent-rainbowline").make_opts(opts, {
