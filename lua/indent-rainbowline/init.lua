@@ -1,7 +1,7 @@
 local function mix_colors(a, b, mult)
 	return {
 		a[1] * mult + b[1] * (1 - mult),
-		a[2] * mult + b[1] * (1 - mult),
+		a[2] * mult + b[2] * (1 - mult),
 		a[3] * mult + b[3] * (1 - mult),
 	}
 end
