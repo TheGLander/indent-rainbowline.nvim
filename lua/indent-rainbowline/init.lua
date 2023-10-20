@@ -1,4 +1,5 @@
 local ibl_hooks = require("ibl.hooks")
+
 local function mix_colors(a, b, mult)
 	return {
 		a[1] * mult + b[1] * (1 - mult),
@@ -26,6 +27,7 @@ local function make_hl_groups(opts)
 	local groups_name_prefix = opts.prefix
 	local color_groups = {}
 	local base_bg = decompose_color(base_hl.bg)
+
 	for i, rainbow_color_composed in ipairs(rainbow_colors) do
 		local rainbow_color = decompose_color(rainbow_color_composed)
 		local mixed_color = mix_colors(rainbow_color, base_bg, color_transparency)
@@ -68,9 +70,20 @@ end
 -- Mutate the given indent_blankline options to have rainbow space characters
 local function make_opts(blank_opts, rainbow_opts)
 	blank_opts = blank_opts or {}
+	if not blank_opts.indent then
+		blank_opts.indent = {}
+	end
+	if not blank_opts.whitespace then
+		blank_opts.whitespace = {}
+	end
+	if not blank_opts.scope then
+		blank_opts.scope = {}
+	end
 	rainbow_opts = rainbow_opts or {}
-	local hl = resolve_hl("IndentBlanklineChar")
-	local hl_context = resolve_hl("IndentBlanklineContextChar")
+
+	local hl = resolve_hl(blank_opts.indent.highlight or "IblIndent")
+	local hl_context = resolve_hl(blank_opts.scope.highlight or "IblScope")
+
 	local hl_colors = make_hl_groups({
 		colors = rainbow_opts.colors,
 		color_transparency = rainbow_opts.color_transparency,
@@ -85,9 +98,11 @@ local function make_opts(blank_opts, rainbow_opts)
 		prefix = "RainbowColorContext",
 		auto_setup = true,
 	})
-	blank_opts.char_highlight_list = hl_colors
-	blank_opts.space_char_highlight_list = hl_colors
-	blank_opts.context_highlight_list = hl_context_colors
+
+	blank_opts.indent.highlight = hl_colors
+	blank_opts.whitespace.highlight = hl_colors
+	blank_opts.scope.highlight = hl_context_colors
+
 	return blank_opts
 end
 
