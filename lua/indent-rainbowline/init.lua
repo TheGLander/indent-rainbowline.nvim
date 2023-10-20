@@ -1,3 +1,4 @@
+local ibl_hooks = require("ibl.hooks")
 local function mix_colors(a, b, mult)
 	return {
 		a[1] * mult + b[1] * (1 - mult),
@@ -32,6 +33,14 @@ local function make_hl_groups(opts)
 		vim.api.nvim_set_hl(0, group_name, { bg = compose_color(mixed_color), fg = base_hl.fg })
 		table.insert(color_groups, group_name)
 	end
+
+	if opts.auto_setup then
+		opts.auto_setup = false
+		ibl_hooks.register(ibl_hooks.type.HIGHLIGHT_SETUP, function()
+			make_hl_groups(opts)
+		end)
+	end
+
 	return color_groups
 end
 
@@ -67,12 +76,14 @@ local function make_opts(blank_opts, rainbow_opts)
 		color_transparency = rainbow_opts.color_transparency,
 		hl = hl,
 		prefix = "RainbowColor",
+		auto_setup = true,
 	})
 	local hl_context_colors = make_hl_groups({
 		colors = rainbow_opts.colors,
 		color_transparency = rainbow_opts.color_transparency,
 		hl = hl_context,
 		prefix = "RainbowColorContext",
+		auto_setup = true,
 	})
 	blank_opts.char_highlight_list = hl_colors
 	blank_opts.space_char_highlight_list = hl_colors
