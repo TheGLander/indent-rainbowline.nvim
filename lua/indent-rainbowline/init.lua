@@ -9,6 +9,9 @@ local function mix_colors(a, b, mult)
 end
 
 local function decompose_color(color)
+	if color == nil then
+		color = 0
+	end
 	local blue = color % 256
 	local green = (color - blue) / 256 % 256
 	local red = (color - green * 256 - blue) / 256 / 256
@@ -19,11 +22,34 @@ local function compose_color(color)
 	return math.floor(math.floor(color[3]) + math.floor(color[2]) * 256 + math.floor(color[1]) * 256 * 256)
 end
 
+local function fill_missing_hl_parts(hl, base)
+	if hl.bg == nil then
+		hl.bg = base.bg
+	end
+	if hl.fg == nil then
+		hl.fg = base.fg
+	end
+end
+
+-- A slightly more terse way of getting a highlight from the Nvim API
+local function get_hl(name)
+	return vim.api.nvim_get_hl(0, { name = name, link = false })
+end
+
+-- Resolves the name by looking up the hightlight and defaulting to the normal fg/bg colors if they aren't set
+local function resolve_hl(name, fallback_name)
+	local hl = get_hl(name)
+	if fallback_name ~= nil then
+		fill_missing_hl_parts(hl, get_hl(fallback_name))
+	end
+	return hl
+end
+
 -- Generates a list of highlight groups based on the base highlight, but with some colors mixed in
 local function make_hl_groups(opts)
 	local color_transparency = opts.color_transparency or 0.07
 	local rainbow_colors = opts.colors or { 0xffff40, 0x79ff79, 0xff79ff, 0x4fecec }
-	local base_hl = opts.hl
+	local base_hl = resolve_hl(opts.hl, opts.hl_fallback)
 	local groups_name_prefix = opts.prefix
 	local color_groups = {}
 	local base_bg = decompose_color(base_hl.bg)
@@ -46,27 +72,6 @@ local function make_hl_groups(opts)
 	return color_groups
 end
 
-local function fill_missing_hl_parts(hl, base)
-	if hl.bg == nil then
-		hl.bg = base.bg
-	end
-	if hl.fg == nil then
-		hl.fg = base.fg
-	end
-end
-
--- A slightly more terse way of getting a highlight from the Nvim API
-local function get_hl(name)
-	return vim.api.nvim_get_hl(0, { name = name, link = false })
-end
-
--- Resolves the name by looking up the hightlight and defaulting to the normal fg/bg colors if they aren't set
-local function resolve_hl(name)
-	local hl = get_hl(name)
-	fill_missing_hl_parts(hl, get_hl("Normal"))
-	return hl
-end
-
 -- Mutate the given indent_blankline options to have rainbow space characters
 local function make_opts(blank_opts, rainbow_opts)
 	blank_opts = blank_opts or {}
@@ -81,8 +86,6 @@ local function make_opts(blank_opts, rainbow_opts)
 	end
 	rainbow_opts = rainbow_opts or {}
 
-	local hl = resolve_hl(blank_opts.indent.highlight or "IblIndent")
-	local hl_context = resolve_hl(blank_opts.scope.highlight or "IblScope")
 	-- Force blankline to setup Ibl* highlight groups incase we
 	-- use them and blankline doesn't bother to set them up later (in its `setup`)
 	-- since we specified RainbowColor* hightlights
@@ -91,15 +94,16 @@ local function make_opts(blank_opts, rainbow_opts)
 	local hl_colors = make_hl_groups({
 		colors = rainbow_opts.colors,
 		color_transparency = rainbow_opts.color_transparency,
-		hl = hl,
+		hl = blank_opts.indent.highlight or "IblIndent",
 		prefix = "RainbowColor",
 		auto_setup = true,
 	})
 	local hl_context_colors = make_hl_groups({
 		colors = rainbow_opts.colors,
 		color_transparency = rainbow_opts.color_transparency,
-		hl = hl_context,
-		prefix = "RainbowColorContext",
+		hl = blank_opts.scope.highlight or "IblScope",
+		hl_fallback = blank_opts.indent.highlight or "IblIndent",
+		prefix = "RainbowColorScope",
 		auto_setup = true,
 	})
 
