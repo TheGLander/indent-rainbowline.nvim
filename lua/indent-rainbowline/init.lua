@@ -83,6 +83,10 @@ local function make_opts(blank_opts, rainbow_opts)
 
 	local hl = resolve_hl(blank_opts.indent.highlight or "IblIndent")
 	local hl_context = resolve_hl(blank_opts.scope.highlight or "IblScope")
+	-- Force blankline to setup Ibl* highlight groups incase we
+	-- use them and blankline doesn't bother to set them up later (in its `setup`)
+	-- since we specified RainbowColor* hightlights
+	require("ibl.highlights").setup()
 
 	local hl_colors = make_hl_groups({
 		colors = rainbow_opts.colors,
